@@ -1,13 +1,37 @@
 {
-  "name": "tauri-app",
-  "private": true,
-  "version": "0.1.0",
+  "name": "ai-pdf-viewer",
+  "private": false,
+  "version": "0.0.1",
+  "description": "AI-powered PDF viewer with synchronized reading, pronunciation checking, and intelligent document analysis",
+  "author": "AI PDF Viewer Contributors",
+  "license": "(MIT OR Apache-2.0)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/ai-pdf-viewer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/ai-pdf-viewer/issues"
+  },
+  "keywords": [
+    "pdf",
+    "viewer",
+    "ai",
+    "tauri",
+    "react",
+    "typescript",
+    "tts",
+    "ocr",
+    "translation",
+    "pronunciation"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\""
   },
   "dependencies": {
     "react": "^19.1.0",
