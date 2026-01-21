@@ -14,6 +14,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 export class PDFService {
   private document: pdfjsLib.PDFDocumentProxy | null = null;
   private pageCache: Map<number, pdfjsLib.PDFPageProxy> = new Map();
+  private pageLRU: number[] = [];
   private maxCacheSize = 20;
 
   async loadDocument(data: Uint8Array): Promise<PDFDocumentMetadata> {
@@ -45,20 +46,63 @@ export class PDFService {
 
     const cachedPage = this.pageCache.get(pageNumber);
     if (cachedPage) {
+      this.updateLRU(pageNumber);
       return cachedPage;
     }
 
     const page = await this.document.getPage(pageNumber);
     
     if (this.pageCache.size >= this.maxCacheSize) {
-      const firstKey = this.pageCache.keys().next().value;
-      if (typeof firstKey === 'number') {
-        this.pageCache.delete(firstKey);
+      const oldestPage = this.pageLRU.shift();
+      if (typeof oldestPage === 'number') {
+        this.pageCache.delete(oldestPage);
       }
     }
 
     this.pageCache.set(pageNumber, page);
+    this.pageLRU.push(pageNumber);
+    
     return page;
+  }
+
+  private updateLRU(pageNumber: number): void {
+    const index = this.pageLRU.indexOf(pageNumber);
+    if (index > -1) {
+      this.pageLRU.splice(index, 1);
+    }
+    this.pageLRU.push(pageNumber);
+  }
+
+  preloadPages(startPage: number, endPage: number): void {
+    if (!this.document) return;
+
+    const validStart = Math.max(1, startPage);
+    const validEnd = Math.min(endPage, this.document.numPages);
+
+    for (let i = validStart; i <= validEnd; i++) {
+      if (!this.pageCache.has(i)) {
+        void this.getPage(i);
+      }
+    }
+  }
+
+  getCacheStats(): { size: number; maxSize: number; hitRate: number } {
+    return {
+      size: this.pageCache.size,
+      maxSize: this.maxCacheSize,
+      hitRate: this.pageCache.size > 0 ? this.pageCache.size / this.maxCacheSize : 0,
+    };
+  }
+
+  setMaxCacheSize(size: number): void {
+    this.maxCacheSize = Math.max(5, Math.min(size, 50));
+    
+    while (this.pageCache.size > this.maxCacheSize) {
+      const oldestPage = this.pageLRU.shift();
+      if (typeof oldestPage === 'number') {
+        this.pageCache.delete(oldestPage);
+      }
+    }
   }
 
   async renderPage(
@@ -92,6 +136,7 @@ export class PDFService {
   }
 
   async getPageInfo(pageNumber: number): Promise<PDFPageInfo> {
+    this.pageLRU = [];
     const page = await this.getPage(pageNumber);
     const viewport = page.getViewport({ scale: 1.0 });
 

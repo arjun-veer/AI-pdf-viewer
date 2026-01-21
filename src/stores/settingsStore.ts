@@ -34,40 +34,47 @@ export const useSettingsStore = create<SettingsState>()(
     immer((set) => ({
       ...initialSettings,
 
-      setTheme: (theme) =>
+      setTheme: (theme) => {
         set((state) => {
           state.theme = theme;
-        }),
+        });
+      },
 
-      setLanguage: (language) =>
+      setLanguage: (language) => {
         set((state) => {
           state.language = language;
-        }),
+        });
+      },
 
-      setDefaultZoom: (zoom) =>
+      setDefaultZoom: (zoom) => {
         set((state) => {
           state.defaultZoom = zoom;
-        }),
+        });
+      },
 
-      setEnableAIFeatures: (enabled) =>
+      setEnableAIFeatures: (enabled) => {
         set((state) => {
           state.enableAIFeatures = enabled;
-        }),
+        });
+      },
 
-      setTTSVoice: (voice) =>
+      setTTSVoice: (voice) => {
         set((state) => {
           state.ttsVoice = voice;
-        }),
+        });
+      },
 
-      setTTSSpeed: (speed) =>
+      setTTSSpeed: (speed) => {
         set((state) => {
           state.ttsSpeed = speed;
-        }),
+        });
+      },
 
-      setKeyboardShortcut: (action, shortcut) =>
+      setKeyboardShortcut: (action, shortcut) => {
         set((state) => {
           state.keyboardShortcuts[action] = shortcut;
-        }),
+        });
+      },
     })),
     {
       name: 'app-settings',
