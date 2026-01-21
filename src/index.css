@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+:root {
+  --color-background: 0 0% 100%;
+  --color-foreground: 240 10% 3.9%;
+}
+
+.dark {
+  --color-background: 240 10% 3.9%;
+  --color-foreground: 0 0% 98%;
+}
+
+body {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
