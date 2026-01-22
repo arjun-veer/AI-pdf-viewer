@@ -17,7 +17,7 @@ interface BookmarkItem {
 
 export function PDFSidebar({ className }: PDFSidebarProps) {
   const { document, currentPage, setCurrentPage, totalPages } = usePDFStore();
-  const recentDocuments = useReadingProgressStore((state) => state.getRecentDocuments());
+  const recentDocuments = useReadingProgressStore((state) => state.recentDocuments);
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
   const [activeTab, setActiveTab] = useState<'info' | 'bookmarks' | 'recent' | 'tts'>('info');
   const [pageText, setPageText] = useState<string>('');
