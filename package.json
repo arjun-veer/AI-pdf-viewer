@@ -1,16 +1,16 @@
 {
   "name": "ai-pdf-viewer",
   "private": false,
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "AI-powered PDF viewer with synchronized reading, pronunciation checking, and intelligent document analysis",
   "author": "AI PDF Viewer Contributors",
   "license": "(MIT OR Apache-2.0)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/ai-pdf-viewer.git"
+    "url": "https://github.com/arjun-veer/ai-pdf-viewer.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/ai-pdf-viewer/issues"
+    "url": "https://github.com/arjun-veer/ai-pdf-viewer/issues"
   },
   "keywords": [
     "pdf",

@@ -13,7 +13,7 @@ vi.mock('pdfjs-dist', () => ({
           Author: 'Test Author',
         },
       }),
-      getPage: (pageNum: number) => Promise.resolve({
+      getPage: (_pageNum: number) => Promise.resolve({
         getViewport: () => ({
           width: 600,
           height: 800,
