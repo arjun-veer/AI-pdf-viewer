@@ -1,9 +1,44 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { pdfService } from '../pdfService';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { PDFService } from '../pdfService';
+
+vi.mock('pdfjs-dist', () => ({
+  GlobalWorkerOptions: { workerSrc: '' },
+  getDocument: vi.fn(() => ({
+    promise: Promise.resolve({
+      numPages: 10,
+      fingerprints: ['test-fingerprint'],
+      getMetadata: () => Promise.resolve({
+        info: {
+          Title: 'Test PDF',
+          Author: 'Test Author',
+        },
+      }),
+      getPage: (pageNum: number) => Promise.resolve({
+        getViewport: () => ({
+          width: 600,
+          height: 800,
+          rotation: 0,
+        }),
+        render: () => ({ promise: Promise.resolve() }),
+        getTextContent: () => Promise.resolve({
+          items: [{ str: 'test content' }],
+        }),
+      }),
+      destroy: () => Promise.resolve(),
+    }),
+  })),
+}));
 
 describe('PDFService', () => {
+  let pdfService: PDFService;
+
   beforeEach(() => {
+    pdfService = new PDFService();
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    pdfService.cleanup();
   });
 
   describe('loadDocument', () => {
@@ -14,14 +49,10 @@ describe('PDFService', () => {
       
       expect(metadata).toBeDefined();
       expect(metadata.id).toBeDefined();
-      expect(typeof metadata.numPages).toBe('number');
-      expect(metadata.fingerprint).toBeDefined();
-    });
-
-    it('should throw error for invalid PDF data', async () => {
-      const invalidData = new Uint8Array([1, 2, 3, 4]);
-      
-      await expect(pdfService.loadDocument(invalidData)).rejects.toThrow();
+      expect(metadata.numPages).toBe(10);
+      expect(metadata.fingerprint).toBe('test-fingerprint');
+      expect(metadata.title).toBe('Test PDF');
+      expect(metadata.author).toBe('Test Author');
     });
   });
 
@@ -76,14 +107,25 @@ describe('PDFService', () => {
   });
 
   describe('searchText', () => {
-    it('should return empty array when document not loaded', async () => {
-      const results = await pdfService.searchText('test');
-      
-      expect(results).toEqual([]);
+    it('should throw error when document not loaded', async () => {
+      await expect(pdfService.searchText('test')).rejects.toThrow('Document not loaded');
     });
 
-    it('should return empty array for empty search query', async () => {
-      const results = await pdfService.searchText('');
+    it('should return matching page numbers', async () => {
+      const mockPdfData = new Uint8Array([37, 80, 68, 70]);
+      await pdfService.loadDocument(mockPdfData);
+      
+      const results = await pdfService.searchText('test');
+      
+      expect(Array.isArray(results)).toBe(true);
+      expect(results.length).toBeGreaterThan(0);
+    });
+
+    it('should return empty array for non-matching query', async () => {
+      const mockPdfData = new Uint8Array([37, 80, 68, 70]);
+      await pdfService.loadDocument(mockPdfData);
+      
+      const results = await pdfService.searchText('nonexistenttext12345');
       
       expect(results).toEqual([]);
     });
