@@ -1,0 +1,70 @@
+# macOS Installer Configuration
+# Used with pkgbuild and productbuild
+
+name: AI PDF Viewer
+identifier: com.aipdfviewer.app
+version: 1.0.0
+install-location: /Applications
+
+# Create .app bundle structure
+app-bundle:
+  name: AI PDF Viewer.app
+  executable: ai-pdf-viewer
+  icon: icon.icns
+  
+  info:
+    CFBundleName: AI PDF Viewer
+    CFBundleDisplayName: AI PDF Viewer
+    CFBundleIdentifier: com.aipdfviewer.app
+    CFBundleVersion: 1.0.0
+    CFBundleShortVersionString: 1.0.0
+    CFBundlePackageType: APPL
+    CFBundleSignature: AIPV
+    CFBundleExecutable: ai-pdf-viewer
+    CFBundleIconFile: icon.icns
+    NSHighResolutionCapable: true
+    LSMinimumSystemVersion: 10.15.0
+    
+    # File associations
+    CFBundleDocumentTypes:
+      - CFBundleTypeName: PDF Document
+        CFBundleTypeRole: Viewer
+        CFBundleTypeIconFile: pdf.icns
+        LSItemContentTypes:
+          - com.adobe.pdf
+        LSHandlerRank: Default
+
+    UTExportedTypeDeclarations:
+      - UTTypeIdentifier: com.adobe.pdf
+        UTTypeDescription: PDF Document
+        UTTypeConformsTo:
+          - public.data
+          - public.content
+        UTTypeTagSpecification:
+          public.filename-extension:
+            - pdf
+          public.mime-type:
+            - application/pdf
+
+# Code signing (for notarization)
+codesign:
+  enabled: true
+  identity: "Developer ID Application: Your Name (TEAM_ID)"
+  entitlements: entitlements.plist
+  
+# Notarization (required for macOS 10.15+)
+notarization:
+  enabled: true
+  apple-id: your-apple-id@example.com
+  team-id: YOUR_TEAM_ID
+  asc-provider: YOUR_ASC_PROVIDER
+
+# DMG Settings
+dmg:
+  background: installer-background.png
+  window:
+    width: 600
+    height: 400
+  icon-size: 100
+  app-icon-position: [150, 200]
+  applications-link-position: [450, 200]

@@ -1,8 +1,8 @@
 {
   "name": "ai-pdf-viewer",
   "private": false,
-  "version": "0.2.0",
-  "description": "AI-powered PDF viewer with synchronized reading, pronunciation checking, and intelligent document analysis",
+  "version": "1.0.0",
+  "description": "AI-powered PDF viewer with translation, OCR, RAG chat, annotations, mind maps, and NotebookLM features",
   "author": "AI PDF Viewer Contributors",
   "license": "(MIT OR Apache-2.0)",
   "repository": {

@@ -1,7 +1,7 @@
 [package]
 name = "tauri-app"
-version = "0.2.0"
-description = "A Tauri App"
+version = "1.0.0"
+description = "AI-powered PDF viewer - Stable Release"
 authors = ["you"]
 edition = "2021"
 
