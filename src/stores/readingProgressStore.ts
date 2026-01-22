@@ -125,6 +125,7 @@ export const useReadingProgressStore = create<ReadingProgressState>()(
       },
       partialize: (state) => ({
         history: state.history,
+        recentDocuments: state.recentDocuments,
       }),
     }
   )
