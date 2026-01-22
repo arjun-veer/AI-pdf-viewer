@@ -1,4 +1,154 @@
-# Release Notes - v0.0.1
+# Release Notes
+
+This document contains release notes for all versions of AI PDF Viewer.
+
+---
+
+## v0.0.2 - TTS Foundation & Synchronized Highlighting
+
+**Release Date:** January 22, 2026
+
+### Overview
+
+Version 0.0.2 introduces Text-to-Speech (TTS) capabilities with synchronized highlighting, laying the foundation for the AI-powered reading assistant features.
+
+### 🎯 Major Features
+
+#### Text-to-Speech Foundation (Epic 11)
+- **Web Speech API Integration**: Full browser-native TTS support
+- **Voice Selection**: 20+ languages with auto-detection and selection
+- **Playback Controls**: Play, Pause, Resume, Stop functionality
+- **Audio Settings**: Speed (0.5x-2x), Pitch (0-2), Volume (0-100%)
+- **State Management**: Zustand store with localStorage persistence
+- **Real-time Indicators**: Visual feedback for speaking status
+
+#### Synchronized Highlighting (Epic 12)
+- **Word-Level Highlighting**: Real-time word highlighting during speech
+- **Auto-Scroll**: Keeps current word visible during playback
+- **Visual States**: Different styles for current, past, and future words
+- **PDF Text Extraction**: Extracts and processes text from PDF pages
+- **Smart Word Parsing**: Handles word boundaries and sentence detection
+
+### 🚀 New Components
+
+#### Frontend Components
+- `TTSControls.tsx` - Complete TTS control panel
+- `TTSHighlight.tsx` - Synchronized text highlighting display
+
+#### Services & Utilities
+- `ttsService.ts` - TTS management with Web Speech API
+- `textExtraction.ts` - Text parsing and word boundary utilities
+
+#### State Management
+- `aiStore.ts` - Zustand store for TTS and AI features
+  - Speaking state tracking
+  - Voice preferences persistence
+  - Word index synchronization
+
+#### Hooks
+- `useTTS.ts` - TTS control interface
+- `useVoiceSelection.ts` - Voice management and selection
+
+### 📦 Enhanced Features
+
+#### PDFService Enhancements
+- `getPageText()` - Extract plain text from PDF pages
+- Text content caching for better performance
+
+#### PDFSidebar Updates
+- New "TTS" tab for reading assistance
+- Integrated text extraction and display
+- Real-time text highlighting during speech
+
+### 🎨 User Interface
+
+#### TTS Control Panel
+- Play/Pause/Resume/Stop buttons with state-aware UI
+- Voice dropdown with language display
+- Speed slider (0.5x - 2x with 0.1 steps)
+- Pitch slider (0 - 2 with 0.1 steps)
+- Volume slider (0-100% with 10% steps)
+- Animated speaking indicator
+
+#### Highlight Display
+- Word-by-word highlighting synchronized with speech
+- Smooth animations and transitions
+- Click-to-select word functionality
+- Auto-scroll to keep reading position visible
+- Visual feedback for current/past/future words
+
+### 🛠️ Technical Improvements
+
+#### Performance
+- Efficient text extraction from PDF pages
+- Smart word boundary detection
+- Optimized state synchronization
+- Minimal re-renders with proper selectors
+
+#### Code Quality
+- TypeScript strict mode compliance
+- ESLint zero-warning policy
+- Proper error handling and fallbacks
+- Comprehensive type definitions
+
+#### Testing
+- All 17 tests passing
+- PDFService unit tests (10 tests)
+- Virtual scroll tests (7 tests)
+- Vitest + jsdom setup
+
+### 🐛 Bug Fixes
+
+- Fixed infinite loop in Zustand store selectors
+- Fixed word boundary tracking in TTS service
+- Resolved ESLint template literal errors
+- Fixed setState cascading renders in effects
+
+### 📊 Bundle Size
+
+- Total: 592.19 kB
+- Gzip: 177.42 kB
+- +2.7 kB from v0.0.1 (TTS features)
+
+### 🔄 Breaking Changes
+
+None - fully backward compatible with v0.0.1
+
+### 📝 Tasks Completed
+
+#### Epic 11: TTS Foundation
+- ✅ TASK-039: TTSService with Web Speech API
+- ✅ TASK-040: aiStore with Zustand
+- ✅ TASK-041: Voice selection with language filtering
+
+#### Epic 12: Synchronized Highlighting
+- ✅ TASK-042: TTSHighlight component
+- ✅ TASK-043: Word-boundary tracking
+- ✅ TASK-044: Sync with user reading pace
+
+#### Epic 13: TTS Controls
+- ✅ TASK-045: TTSControl component (completed in Epic 11)
+- ✅ TASK-046: Variable speed (0.5x-2x)
+- ✅ TASK-047: Reading progress tracking
+
+### 🎯 Next Steps (v0.1.0)
+
+- Speech recognition for pronunciation checking
+- Whisper model integration
+- Real-time pronunciation feedback
+- Practice mode with scoring
+
+### 🙏 Known Issues
+
+- PDF.js eval warning in build (library limitation)
+- Large bundle size (will optimize in v0.0.3)
+- TTS voice quality depends on browser implementation
+
+**Full Changelog**: https://github.com/arjun-veer/AI-pdf-viewer/compare/v0.0.1...v0.0.2
+
+---
+
+## v0.0.1 - Core PDF Viewer Foundation
 
 **Release Date:** January 22, 2026  
 **Milestone:** Core PDF Viewer Foundation
