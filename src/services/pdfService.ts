@@ -164,6 +164,15 @@ export class PDFService {
     return textContent as unknown as PDFTextContent;
   }
 
+  async getPageText(pageNumber: number): Promise<string> {
+    const textContent = await this.getTextContent(pageNumber);
+    return textContent.items
+      .map((item) => item.str)
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   async searchText(query: string): Promise<number[]> {
     if (!this.document) {
       throw new Error('Document not loaded');

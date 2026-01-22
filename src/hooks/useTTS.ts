@@ -26,6 +26,10 @@ export function useTTS() {
       setCurrentWordIndex(state.currentWordIndex);
       setTotalWords(state.totalWords);
     });
+
+    ttsService.onWordBoundaryChanged((wordIndex, _word) => {
+      setCurrentWordIndex(wordIndex);
+    });
   }, [setIsSpeaking, setIsPaused, setCurrentWordIndex, setTotalWords]);
 
   const speak = useCallback(

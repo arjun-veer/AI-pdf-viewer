@@ -160,6 +160,10 @@ class TTSService {
     this.onStateChange = callback;
   }
 
+  onWordBoundaryChanged(callback: (wordIndex: number, word: string) => void): void {
+    this.onWordBoundary = callback;
+  }
+
   onWord(callback: (wordIndex: number, word: string) => void): void {
     this.onWordBoundary = callback;
   }
