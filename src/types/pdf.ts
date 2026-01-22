@@ -1,3 +1,5 @@
+import type { HighlightColor, AnnotationType } from '@/stores/annotationStore';
+
 export interface PDFDocumentMetadata {
   id: string;
   numPages: number;
@@ -63,9 +65,9 @@ export interface PDFSearchResult {
 export interface PDFAnnotation {
   id: string;
   pageNumber: number;
-  type: 'highlight' | 'note' | 'bookmark' | 'drawing';
+  type: AnnotationType;
   content?: string;
-  color: string;
+  color?: HighlightColor | string;
   position: {
     x: number;
     y: number;

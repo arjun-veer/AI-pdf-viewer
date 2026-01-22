@@ -1,0 +1,66 @@
+name: ai-pdf-viewer
+version: '1.0.0'
+summary: AI-powered PDF viewer with intelligent features
+description: |
+  AI PDF Viewer is a modern, feature-rich PDF viewer with AI-powered capabilities:
+  - Translation (20+ languages)
+  - OCR for scanned documents
+  - RAG-based chat with document context
+  - Text-to-Speech with pronunciation checking
+  - Practice mode for language learning
+  - Cloud sync with offline support
+  - Annotation and editing tools
+  - Mind map generation
+  - NotebookLM-style audio summaries
+
+base: core22
+confinement: strict
+grade: stable
+
+architectures:
+  - build-on: amd64
+  - build-on: arm64
+
+apps:
+  ai-pdf-viewer:
+    command: bin/ai-pdf-viewer
+    extensions: [gnome]
+    plugs:
+      - home
+      - network
+      - audio-playback
+      - desktop
+      - desktop-legacy
+      - wayland
+      - x11
+      - opengl
+      - removable-media
+    environment:
+      LD_LIBRARY_PATH: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:$LD_LIBRARY_PATH"
+
+parts:
+  ai-pdf-viewer:
+    plugin: rust
+    source: .
+    build-packages:
+      - build-essential
+      - pkg-config
+      - libssl-dev
+      - libgtk-3-dev
+      - libwebkit2gtk-4.0-dev
+      - libappindicator3-dev
+    stage-packages:
+      - libwebkit2gtk-4.0-37
+      - libappindicator3-1
+      - libgtk-3-0
+    
+  desktop-integration:
+    plugin: nil
+    stage:
+      - share/applications/ai-pdf-viewer.desktop
+      - share/icons/hicolor/*/apps/ai-pdf-viewer.png
+      - share/mime/packages/ai-pdf-viewer.xml
+
+layout:
+  /usr/share/mime:
+    bind: $SNAP/usr/share/mime
