@@ -1,9 +1,12 @@
-import type { ReactNode } from 'react';
+import { AppLayout } from './AppLayout';
+import { PDFViewer, PDFToolbar, PDFSidebar } from '@/components/pdf';
 
-interface MainLayoutProps {
-  children: ReactNode;
-}
-
-export default function MainLayout({ children }: MainLayoutProps) {
-  return <div>{children}</div>;
+export function MainLayout() {
+  return (
+    <AppLayout
+      toolbar={<PDFToolbar />}
+      sidebar={<PDFSidebar />}
+      main={<PDFViewer />}
+    />
+  );
 }
