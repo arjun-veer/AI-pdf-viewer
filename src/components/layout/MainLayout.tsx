@@ -1,12 +1,14 @@
 import { AppLayout } from './AppLayout';
-import { PDFViewer, PDFToolbar, PDFSidebar } from '@/components/pdf';
+import { PDFViewer, PDFToolbar, PDFSidebar, FileDropZone } from '@/components/pdf';
 
 export function MainLayout() {
   return (
-    <AppLayout
-      toolbar={<PDFToolbar />}
-      sidebar={<PDFSidebar />}
-      main={<PDFViewer />}
-    />
+    <FileDropZone>
+      <AppLayout
+        toolbar={<PDFToolbar />}
+        sidebar={<PDFSidebar />}
+        main={<PDFViewer />}
+      />
+    </FileDropZone>
   );
 }
