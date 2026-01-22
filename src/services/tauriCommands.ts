@@ -1,5 +1,12 @@
 import { invoke } from '@tauri-apps/api/core';
 
+export interface PdfMetadata {
+  path: string;
+  file_name: string;
+  file_size: number;
+  num_pages: number | null;
+}
+
 export async function invokeCommand<T>(
   command: string,
   args?: Record<string, unknown>
@@ -8,11 +15,12 @@ export async function invokeCommand<T>(
 }
 
 export const tauriCommands = {
-  loadPdf: async (filePath: string) => {
-    return await invokeCommand<{ id: string; pages: number; lastPage?: number }>(
-      'load_pdf',
-      { filePath }
-    );
+  loadPdf: async (path: string) => {
+    return await invokeCommand<PdfMetadata>('load_pdf', { path });
+  },
+
+  getPdfInfo: async (path: string) => {
+    return await invokeCommand<PdfMetadata>('get_pdf_info', { path });
   },
 
   saveReadingProgress: async (documentId: string, page: number) => {

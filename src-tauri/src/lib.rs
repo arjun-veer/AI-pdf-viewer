@@ -17,7 +17,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             open_file_dialog,
-            read_file
+            read_file,
+            load_pdf,
+            get_pdf_info
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
