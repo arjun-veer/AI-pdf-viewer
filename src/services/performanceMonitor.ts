@@ -1,6 +1,8 @@
 class PerformanceMonitor {
   private metrics: Map<string, number[]> = new Map();
   private readonly maxSamples = 100;
+  private renderTimingThreshold = 50;
+  private memoryWarningThreshold = 150 * 1024 * 1024;
 
   start(label: string): () => void {
     const startTime = performance.now();
@@ -8,6 +10,10 @@ class PerformanceMonitor {
     return () => {
       const duration = performance.now() - startTime;
       this.record(label, duration);
+      
+      if (label.includes('render') && duration > this.renderTimingThreshold) {
+        console.warn(`[Performance] Slow render detected: ${label} took ${duration.toFixed(2)}ms (target: <${this.renderTimingThreshold.toString()}ms)`);
+      }
     };
   }
 
@@ -69,6 +75,36 @@ class PerformanceMonitor {
     } else {
       console.log('[Performance] All metrics:', this.getAllStats());
     }
+  }
+
+  getMemoryUsage(): { used: number; limit: number } | null {
+    if ('memory' in performance) {
+      const memory = (performance as { memory?: { usedJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
+      if (memory) {
+        return {
+          used: memory.usedJSHeapSize,
+          limit: memory.jsHeapSizeLimit,
+        };
+      }
+    }
+    return null;
+  }
+
+  checkMemoryUsage(): void {
+    const memory = this.getMemoryUsage();
+    if (memory && memory.used > this.memoryWarningThreshold) {
+      const usedMB = (memory.used / 1024 / 1024).toFixed(2);
+      const thresholdMB = (this.memoryWarningThreshold / 1024 / 1024).toFixed(2);
+      console.warn(`[Performance] High memory usage: ${usedMB}MB (threshold: ${thresholdMB}MB)`);
+    }
+  }
+
+  setRenderTimingThreshold(ms: number): void {
+    this.renderTimingThreshold = ms;
+  }
+
+  setMemoryWarningThreshold(bytes: number): void {
+    this.memoryWarningThreshold = bytes;
   }
 }
 
