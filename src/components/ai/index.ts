@@ -4,3 +4,4 @@ export { default as TranslationPanel } from './TranslationPanel';
 export { default as ChatPanel } from './ChatPanel';
 export { TTSControls } from './TTSControls';
 export { TTSHighlight } from './TTSHighlight';
+export { ModelDownloader } from './ModelDownloader';

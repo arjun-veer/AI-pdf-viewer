@@ -19,7 +19,14 @@ pub fn run() {
             open_file_dialog,
             read_file,
             load_pdf,
-            get_pdf_info
+            get_pdf_info,
+            get_available_models,
+            get_models_dir,
+            is_model_downloaded,
+            list_downloaded_models,
+            get_model_path,
+            delete_model,
+            get_model_size
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
