@@ -5,6 +5,7 @@ import type {
   PDFRenderOptions,
   PDFTextContent,
 } from '@/types/pdf';
+import { performanceMonitor } from './performanceMonitor';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -110,29 +111,37 @@ export class PDFService {
     canvas: HTMLCanvasElement,
     options: PDFRenderOptions
   ): Promise<void> {
-    const page = await this.getPage(pageNumber);
-    const viewport = page.getViewport({ 
-      scale: options.scale,
-      rotation: options.rotation ?? 0,
-    });
+    const endTiming = performanceMonitor.start(`render-page-${pageNumber.toString()}`);
+    
+    try {
+      const page = await this.getPage(pageNumber);
+      const viewport = page.getViewport({ 
+        scale: options.scale,
+        rotation: options.rotation ?? 0,
+      });
 
-    const context = canvas.getContext('2d');
-    if (!context) {
-      throw new Error('Canvas context not available');
+      const context = canvas.getContext('2d');
+      if (!context) {
+        throw new Error('Canvas context not available');
+      }
+
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      if (options.background) {
+        context.fillStyle = options.background;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      await page.render({
+        canvasContext: context,
+        viewport: viewport,
+      }).promise;
+
+      performanceMonitor.checkMemoryUsage();
+    } finally {
+      endTiming();
     }
-
-    canvas.height = viewport.height;
-    canvas.width = viewport.width;
-
-    if (options.background) {
-      context.fillStyle = options.background;
-      context.fillRect(0, 0, canvas.width, canvas.height);
-    }
-
-    await page.render({
-      canvasContext: context,
-      viewport: viewport,
-    }).promise;
   }
 
   async getPageInfo(pageNumber: number): Promise<PDFPageInfo> {
