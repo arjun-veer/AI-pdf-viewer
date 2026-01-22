@@ -4,3 +4,4 @@ export { usePageNavigation, useKeyboardNavigation } from './usePageNavigation';
 export { useZoomControls, useKeyboardZoom } from './useZoomControls';
 export { useTheme } from './useTheme';
 export { usePDFPreload, usePDFCleanup } from './usePDFPreload';
+export { useFileOpen } from './useFileOpen';

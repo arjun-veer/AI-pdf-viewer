@@ -1,4 +1,4 @@
-import { usePageNavigation, useZoomControls } from '@/hooks';
+import { usePageNavigation, useZoomControls, useFileOpen } from '@/hooks';
 import { usePDFStore } from '@/stores/pdfStore';
 import { cn } from '@/lib/utils';
 
@@ -10,6 +10,7 @@ export function PDFToolbar({ className }: PDFToolbarProps) {
   const { currentPage, totalPages } = usePDFStore();
   const { nextPage, prevPage, goToPage } = usePageNavigation();
   const { zoomIn, zoomOut, resetZoom, zoomPercentage } = useZoomControls();
+  const { openFile, isLoading } = useFileOpen();
 
   const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const page = parseInt(e.target.value, 10);
@@ -18,12 +19,27 @@ export function PDFToolbar({ className }: PDFToolbarProps) {
     }
   };
 
+  const handleOpenFile = () => {
+    void openFile();
+  };
+
   return (
     <div className={cn(
       'flex items-center justify-between gap-4 border-b bg-background px-4 py-2',
       className
     )}>
       <div className="flex items-center gap-2">
+        <button
+          onClick={handleOpenFile}
+          disabled={isLoading}
+          className="rounded bg-accent px-3 py-1 text-sm disabled:opacity-50"
+          title="Open PDF file"
+        >
+          {isLoading ? 'Opening...' : 'Open'}
+        </button>
+
+        <div className="h-4 border-l border-border" />
+
         <button
           onClick={prevPage}
           disabled={currentPage <= 1}
