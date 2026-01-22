@@ -1,7 +1,7 @@
 {
   "name": "ai-pdf-viewer",
   "private": false,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "AI-powered PDF viewer with synchronized reading, pronunciation checking, and intelligent document analysis",
   "author": "AI PDF Viewer Contributors",
   "license": "(MIT OR Apache-2.0)",

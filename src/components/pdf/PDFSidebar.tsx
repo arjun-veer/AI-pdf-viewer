@@ -1,7 +1,16 @@
 import { useState, useMemo, useEffect } from 'react';
 import { usePDFStore } from '@/stores/pdfStore';
 import { useReadingProgressStore } from '@/stores/readingProgressStore';
-import { TTSControls, TTSHighlight, PronunciationChecker, PracticeMode } from '@/components/ai';
+import { 
+  TTSControls, 
+  TTSHighlight, 
+  PronunciationChecker, 
+  PracticeMode,
+  TranslationPanel,
+  OCRPanel,
+  ChatPanel,
+  SyncSettings
+} from '@/components/ai';
 import { pdfService } from '@/services/pdfService';
 import { cn } from '@/lib/utils';
 
@@ -20,11 +29,12 @@ export function PDFSidebar({ className }: PDFSidebarProps) {
   const recentDocuments = useReadingProgressStore((state) => state.recentDocuments);
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
   const [activeTab, setActiveTab] = useState<
-    'info' | 'bookmarks' | 'recent' | 'tts' | 'practice'
+    'info' | 'bookmarks' | 'recent' | 'tts' | 'practice' | 'translate' | 'ocr' | 'chat' | 'sync'
   >('info');
   const [pageText, setPageText] = useState<string>('');
   const [isLoadingText, setIsLoadingText] = useState(false);
   const [documentHash, setDocumentHash] = useState<string>('');
+  const [selectedText] = useState<string>('');
 
   // Generate document hash for practice tracking
   useEffect(() => {
@@ -34,10 +44,15 @@ export function PDFSidebar({ className }: PDFSidebarProps) {
     }
   }, [document]);
 
-  // Extract text from current page for TTS and Practice
+  // Extract text from current page for TTS, Practice, Translation, OCR, and Chat
   useEffect(() => {
     const loadPageText = async () => {
-      if (!document || (activeTab !== 'tts' && activeTab !== 'practice')) return;
+      if (!document || 
+          (activeTab !== 'tts' && 
+           activeTab !== 'practice' && 
+           activeTab !== 'translate' && 
+           activeTab !== 'ocr' && 
+           activeTab !== 'chat')) return;
 
       setIsLoadingText(true);
       try {
@@ -81,7 +96,7 @@ export function PDFSidebar({ className }: PDFSidebarProps) {
     )}>
       {/* Tabs */}
       <div className="flex border-b overflow-x-auto">
-        {(['info', 'bookmarks', 'recent', 'tts', 'practice'] as const).map((tab) => (
+        {(['info', 'bookmarks', 'recent', 'tts', 'practice', 'translate', 'ocr', 'chat', 'sync'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => {
@@ -273,6 +288,64 @@ export function PDFSidebar({ className }: PDFSidebarProps) {
                 pageNumber={currentPage}
               />
             )}
+          </div>
+        )}
+
+        {activeTab === 'translate' && (
+          <div className="flex flex-col gap-4">
+            {isLoadingText ? (
+              <div className="flex items-center justify-center p-4">
+                <p className="text-sm text-muted-foreground">Loading text...</p>
+              </div>
+            ) : (
+              <TranslationPanel
+                documentHash={documentHash}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                pageText={pageText}
+                selectedText={selectedText}
+              />
+            )}
+          </div>
+        )}
+
+        {activeTab === 'ocr' && (
+          <div className="flex flex-col gap-4">
+            {isLoadingText ? (
+              <div className="flex items-center justify-center p-4">
+                <p className="text-sm text-muted-foreground">Loading OCR...</p>
+              </div>
+            ) : (
+              <OCRPanel
+                documentHash={documentHash}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                pageText={pageText}
+                hasImages={true}
+              />
+            )}
+          </div>
+        )}
+
+        {activeTab === 'chat' && (
+          <div className="flex flex-col gap-4 h-full">
+            {isLoadingText ? (
+              <div className="flex items-center justify-center p-4">
+                <p className="text-sm text-muted-foreground">Loading chat...</p>
+              </div>
+            ) : (
+              <ChatPanel
+                documentHash={documentHash}
+                pages={[{ pageNumber: currentPage, text: pageText }]}
+                onNavigateToPage={setCurrentPage}
+              />
+            )}
+          </div>
+        )}
+
+        {activeTab === 'sync' && (
+          <div className="flex flex-col gap-4">
+            <SyncSettings />
           </div>
         )}
       </div>

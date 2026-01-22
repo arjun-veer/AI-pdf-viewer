@@ -12,7 +12,10 @@ fn greet(name: &str) -> String {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let app_state = AppState::default();
+
     tauri::Builder::default()
+        .manage(app_state)
         .plugin(tauri_plugin_opener::init())
         .plugin(
             tauri_plugin_sql::Builder::default()
@@ -31,7 +34,23 @@ pub fn run() {
             list_downloaded_models,
             get_model_path,
             delete_model,
-            get_model_size
+            get_model_size,
+            // Translation commands
+            translate_text,
+            translate_page,
+            translate_document,
+            detect_language,
+            // OCR commands
+            is_page_scanned,
+            ocr_page,
+            ocr_document,
+            extract_text_from_image,
+            // Keychain commands
+            store_api_key,
+            get_api_key,
+            delete_api_key,
+            has_api_key,
+            list_api_services
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
