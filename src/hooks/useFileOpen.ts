@@ -1,4 +1,6 @@
 import { useState, useCallback } from 'react';
+import { open } from '@tauri-apps/plugin-dialog';
+import { readFile } from '@tauri-apps/plugin-fs';
 import { pdfService } from '@/services/pdfService';
 import { usePDFStore } from '@/stores/pdfStore';
 import { useReadingProgressStore } from '@/stores/readingProgressStore';
@@ -18,8 +20,6 @@ export function useFileOpen() {
       try {
         setIsLoading(true);
 
-        // Tauri v2 file dialog - dynamic import
-        const { open } = await import('@tauri-apps/plugin-dialog');
         const filePath = await open({
           filters: [
             {
@@ -34,8 +34,6 @@ export function useFileOpen() {
           return;
         }
 
-        // Tauri v2 file system - dynamic import
-        const { readFile } = await import('@tauri-apps/plugin-fs');
         const fileBytes = await readFile(filePath);
         const uint8Array = new Uint8Array(fileBytes);
 
@@ -72,7 +70,6 @@ export function useFileOpen() {
       try {
         setIsLoading(true);
 
-        const { readFile } = await import('@tauri-apps/plugin-fs');
         const fileBytes = await readFile(filePath);
         const uint8Array = new Uint8Array(fileBytes as ArrayBufferLike);
 

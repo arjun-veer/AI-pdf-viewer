@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { usePDFStore } from '@/stores/pdfStore';
 import { useReadingProgressStore } from '@/stores/readingProgressStore';
-import { TTSControls, TTSHighlight, PronunciationChecker } from '@/components/ai';
+import { TTSControls, TTSHighlight, PronunciationChecker, PracticeMode } from '@/components/ai';
 import { pdfService } from '@/services/pdfService';
 import { cn } from '@/lib/utils';
 
@@ -19,14 +19,25 @@ export function PDFSidebar({ className }: PDFSidebarProps) {
   const { document, currentPage, setCurrentPage, totalPages } = usePDFStore();
   const recentDocuments = useReadingProgressStore((state) => state.recentDocuments);
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
-  const [activeTab, setActiveTab] = useState<'info' | 'bookmarks' | 'recent' | 'tts'>('info');
+  const [activeTab, setActiveTab] = useState<
+    'info' | 'bookmarks' | 'recent' | 'tts' | 'practice'
+  >('info');
   const [pageText, setPageText] = useState<string>('');
   const [isLoadingText, setIsLoadingText] = useState(false);
+  const [documentHash, setDocumentHash] = useState<string>('');
 
-  // Extract text from current page for TTS
+  // Generate document hash for practice tracking
+  useEffect(() => {
+    if (document) {
+      const hash = `doc-${String(Date.now())}`; // Simple hash, use SHA-256 in production
+      setDocumentHash(hash);
+    }
+  }, [document]);
+
+  // Extract text from current page for TTS and Practice
   useEffect(() => {
     const loadPageText = async () => {
-      if (!document || activeTab !== 'tts') return;
+      if (!document || (activeTab !== 'tts' && activeTab !== 'practice')) return;
 
       setIsLoadingText(true);
       try {
@@ -69,15 +80,15 @@ export function PDFSidebar({ className }: PDFSidebarProps) {
       className
     )}>
       {/* Tabs */}
-      <div className="flex border-b">
-        {(['info', 'bookmarks', 'recent', 'tts'] as const).map((tab) => (
+      <div className="flex border-b overflow-x-auto">
+        {(['info', 'bookmarks', 'recent', 'tts', 'practice'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => {
               setActiveTab(tab);
             }}
             className={cn(
-              'flex-1 px-3 py-2 text-sm font-medium transition-colors',
+              'flex-1 px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap',
               activeTab === tab
                 ? 'border-b-2 border-accent text-accent'
                 : 'text-muted-foreground hover:text-foreground'
@@ -238,9 +249,29 @@ export function PDFSidebar({ className }: PDFSidebarProps) {
                   <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">
                     Pronunciation Practice
                   </h3>
-                  <PronunciationChecker text={pageText} />
+                  <PronunciationChecker
+                    text={pageText}
+                    documentHash={documentHash}
+                    pageNumber={currentPage}
+                  />
                 </div>
               </>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'practice' && (
+          <div className="flex flex-col gap-4">
+            {isLoadingText ? (
+              <div className="flex items-center justify-center p-4">
+                <p className="text-sm text-muted-foreground">Loading practice data...</p>
+              </div>
+            ) : (
+              <PracticeMode
+                documentHash={documentHash}
+                pageText={pageText}
+                pageNumber={currentPage}
+              />
             )}
           </div>
         )}

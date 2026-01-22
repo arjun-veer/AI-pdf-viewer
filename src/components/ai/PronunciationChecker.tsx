@@ -7,13 +7,25 @@ import { Progress } from '@/components/ui/progress';
 import { AudioRecorder } from '@/services/audioRecorder';
 import { PronunciationService, type PronunciationResult } from '@/services/pronunciationService';
 import { PronunciationFeedback } from './PronunciationFeedback';
+import {
+  savePracticeSession,
+  updateWordPractice,
+  initDatabase,
+} from '@/services/practiceDatabase';
 
 interface PronunciationCheckerProps {
   text: string;
+  documentHash?: string;
+  pageNumber?: number;
   onComplete?: (result: PronunciationResult) => void;
 }
 
-export function PronunciationChecker({ text, onComplete }: PronunciationCheckerProps) {
+export function PronunciationChecker({
+  text,
+  documentHash,
+  pageNumber,
+  onComplete,
+}: PronunciationCheckerProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<PronunciationResult | null>(null);
@@ -88,6 +100,8 @@ export function PronunciationChecker({ text, onComplete }: PronunciationCheckerP
       setIsRecording(false);
       setIsProcessing(true);
 
+      const startTime = Date.now();
+
       // Stop recording and get audio blob
       const recording = await audioRecorderRef.current.stop();
 
@@ -106,6 +120,12 @@ export function PronunciationChecker({ text, onComplete }: PronunciationCheckerP
       );
 
       setResult(pronunciationResult);
+
+      // Save practice data if document info is available
+      if (documentHash && pageNumber !== undefined) {
+        await savePracticeData(pronunciationResult, startTime);
+      }
+
       onComplete?.(pronunciationResult);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to process recording';
@@ -114,6 +134,37 @@ export function PronunciationChecker({ text, onComplete }: PronunciationCheckerP
     } finally {
       setIsProcessing(false);
       audioRecorderRef.current = null;
+    }
+  };
+
+  const savePracticeData = async (result: PronunciationResult, startTime: number) => {
+    if (!documentHash || pageNumber === undefined) return;
+    
+    try {
+      await initDatabase();
+
+      // Save practice session
+      await savePracticeSession({
+        documentHash,
+        pageNumber,
+        text: result.expected,
+        accuracy: result.overallAccuracy,
+        duration: Date.now() - startTime,
+        timestamp: Date.now(),
+      });
+
+      // Save word practice records
+      for (const wordResult of result.wordResults) {
+        await updateWordPractice(
+          wordResult.expectedWord,
+          documentHash,
+          pageNumber,
+          wordResult.similarity,
+          false // Not marked by default
+        );
+      }
+    } catch (error) {
+      console.error('Failed to save practice data:', error);
     }
   };
 
@@ -201,7 +252,7 @@ export function PronunciationChecker({ text, onComplete }: PronunciationCheckerP
           {!isRecording && !isProcessing && !result && (
             <>
               <Button
-                onClick={startRecording}
+                onClick={() => { void startRecording(); }}
                 disabled={Boolean(error)}
                 className="flex-1"
               >
@@ -221,7 +272,7 @@ export function PronunciationChecker({ text, onComplete }: PronunciationCheckerP
           {isRecording && (
             <>
               <Button
-                onClick={stopRecording}
+                onClick={() => { void stopRecording(); }}
                 variant="destructive"
                 className="flex-1"
               >
@@ -240,7 +291,7 @@ export function PronunciationChecker({ text, onComplete }: PronunciationCheckerP
           {result && (
             <>
               <Button
-                onClick={startRecording}
+                onClick={() => { void startRecording(); }}
                 variant="outline"
                 className="flex-1"
               >
