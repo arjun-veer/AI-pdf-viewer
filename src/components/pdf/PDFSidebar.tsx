@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { usePDFStore } from '@/stores/pdfStore';
 import { useReadingProgressStore } from '@/stores/readingProgressStore';
-import { TTSControls } from '@/components/ai';
+import { TTSControls, TTSHighlight } from '@/components/ai';
+import { pdfService } from '@/services/pdfService';
 import { cn } from '@/lib/utils';
 
 interface PDFSidebarProps {
@@ -19,6 +20,28 @@ export function PDFSidebar({ className }: PDFSidebarProps) {
   const recentDocuments = useReadingProgressStore((state) => state.getRecentDocuments());
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
   const [activeTab, setActiveTab] = useState<'info' | 'bookmarks' | 'recent' | 'tts'>('info');
+  const [pageText, setPageText] = useState<string>('');
+  const [isLoadingText, setIsLoadingText] = useState(false);
+
+  // Extract text from current page for TTS
+  useEffect(() => {
+    const loadPageText = async () => {
+      if (!document || activeTab !== 'tts') return;
+
+      setIsLoadingText(true);
+      try {
+        const text = await pdfService.getPageText(currentPage);
+        setPageText(text);
+      } catch (error) {
+        console.error('Failed to extract page text:', error);
+        setPageText('');
+      } finally {
+        setIsLoadingText(false);
+      }
+    };
+
+    void loadPageText();
+  }, [document, currentPage, activeTab]);
 
   const addBookmark = () => {
     if (!bookmarks.find((b) => b.pageNumber === currentPage)) {
@@ -190,7 +213,29 @@ export function PDFSidebar({ className }: PDFSidebarProps) {
         )}
 
         {activeTab === 'tts' && (
-          <TTSControls className="mt-2" />
+          <div className="flex flex-col gap-4">
+            {isLoadingText ? (
+              <div className="flex items-center justify-center p-4">
+                <p className="text-sm text-muted-foreground">Loading text...</p>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">
+                    Page {currentPage} Text
+                  </h3>
+                  <TTSHighlight text={pageText} className="text-sm" />
+                </div>
+                
+                <div>
+                  <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">
+                    Controls
+                  </h3>
+                  <TTSControls text={pageText} />
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
     </div>
