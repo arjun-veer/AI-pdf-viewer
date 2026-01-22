@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { usePDFStore } from '@/stores/pdfStore';
 import { useReadingProgressStore } from '@/stores/readingProgressStore';
+import { TTSControls } from '@/components/ai';
 import { cn } from '@/lib/utils';
 
 interface PDFSidebarProps {
@@ -17,7 +18,7 @@ export function PDFSidebar({ className }: PDFSidebarProps) {
   const { document, currentPage, setCurrentPage, totalPages } = usePDFStore();
   const recentDocuments = useReadingProgressStore((state) => state.getRecentDocuments());
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
-  const [activeTab, setActiveTab] = useState<'info' | 'bookmarks' | 'recent'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'bookmarks' | 'recent' | 'tts'>('info');
 
   const addBookmark = () => {
     if (!bookmarks.find((b) => b.pageNumber === currentPage)) {
@@ -46,7 +47,7 @@ export function PDFSidebar({ className }: PDFSidebarProps) {
     )}>
       {/* Tabs */}
       <div className="flex border-b">
-        {(['info', 'bookmarks', 'recent'] as const).map((tab) => (
+        {(['info', 'bookmarks', 'recent', 'tts'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => {
@@ -186,6 +187,10 @@ export function PDFSidebar({ className }: PDFSidebarProps) {
               ))
             )}
           </div>
+        )}
+
+        {activeTab === 'tts' && (
+          <TTSControls className="mt-2" />
         )}
       </div>
     </div>
