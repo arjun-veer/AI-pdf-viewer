@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { usePDFStore } from '@/stores/pdfStore';
 import { useReadingProgressStore } from '@/stores/readingProgressStore';
-import { TTSControls, TTSHighlight } from '@/components/ai';
+import { TTSControls, TTSHighlight, PronunciationChecker } from '@/components/ai';
 import { pdfService } from '@/services/pdfService';
 import { cn } from '@/lib/utils';
 
@@ -232,6 +232,13 @@ export function PDFSidebar({ className }: PDFSidebarProps) {
                     Controls
                   </h3>
                   <TTSControls text={pageText} />
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">
+                    Pronunciation Practice
+                  </h3>
+                  <PronunciationChecker text={pageText} />
                 </div>
               </>
             )}
