@@ -3,7 +3,20 @@ mod commands;
 mod services;
 mod utils;
 
-use commands::*;
+use commands::{
+    AppState,
+    // File commands
+    open_file_dialog, read_file, load_pdf, get_pdf_info,
+    // Model commands
+    get_available_models, get_models_dir, is_model_downloaded,
+    list_downloaded_models, get_model_path, delete_model, get_model_size,
+    // Translation commands
+    translate_text, translate_page, translate_document, detect_language,
+    // OCR commands
+    is_page_scanned, ocr_page, ocr_document, extract_text_from_image,
+    // Keychain commands
+    store_api_key, get_api_key, delete_api_key, has_api_key, list_api_services,
+};
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -17,6 +30,7 @@ pub fn run() {
     tauri::Builder::default()
         .manage(app_state)
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(
             tauri_plugin_sql::Builder::default()
                 .add_migrations("sqlite:practice.db", vec![])

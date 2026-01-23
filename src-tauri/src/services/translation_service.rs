@@ -138,7 +138,7 @@ impl TranslationService {
     /// Detect language of text
     pub fn detect_language(&self, text: &str) -> String {
         // Mock language detection - in production, use proper language detection
-        if text.chars().any(|c| c as u32 > 0x4E00 && c as u32 < 0x9FFF) {
+        if text.chars().any(|c| c as u32 > 0x4E00 && (c as u32) < 0x9FFF) {
             "zh".to_string()
         } else if text.chars().any(|c| "àâäèéêëîïôùûüÿæœç".contains(c)) {
             "fr".to_string()

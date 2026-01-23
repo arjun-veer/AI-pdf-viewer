@@ -35,7 +35,12 @@ export function useFileOpen() {
         }
 
         const fileBytes = await readFile(filePath);
-        const uint8Array = new Uint8Array(fileBytes);
+        // Handle both number[] and Uint8Array return types
+        const uint8Array = Array.isArray(fileBytes) 
+          ? new Uint8Array(fileBytes)
+          : fileBytes instanceof Uint8Array
+          ? fileBytes
+          : new Uint8Array(fileBytes as ArrayBufferLike);
 
         const metadata = await pdfService.loadDocument(uint8Array);
         setDocument(metadata);
@@ -71,7 +76,12 @@ export function useFileOpen() {
         setIsLoading(true);
 
         const fileBytes = await readFile(filePath);
-        const uint8Array = new Uint8Array(fileBytes as ArrayBufferLike);
+        // Handle both number[] and Uint8Array return types
+        const uint8Array = Array.isArray(fileBytes) 
+          ? new Uint8Array(fileBytes)
+          : fileBytes instanceof Uint8Array
+          ? fileBytes
+          : new Uint8Array(fileBytes as ArrayBufferLike);
 
         const metadata = await pdfService.loadDocument(uint8Array);
         setDocument(metadata);

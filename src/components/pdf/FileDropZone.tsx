@@ -35,7 +35,7 @@ export function FileDropZone({ children }: FileDropZoneProps) {
       e.stopPropagation();
     };
 
-    const handleDrop = (e: DragEvent) => {
+    const handleDrop = async (e: DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
       dragCounter = 0;
@@ -50,10 +50,28 @@ export function FileDropZone({ children }: FileDropZoneProps) {
         return;
       }
 
-      const path = file.name;
-      openFileQuick(path).catch((err: unknown) => {
+      // In Tauri, we need to use the file path from the file object
+      // For now, read the file as ArrayBuffer from the browser
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+        
+        const { pdfService } = await import('@/services/pdfService');
+        const { usePDFStore } = await import('@/stores/pdfStore');
+        const { useReadingProgressStore } = await import('@/stores/readingProgressStore');
+        
+        const metadata = await pdfService.loadDocument(uint8Array);
+        usePDFStore.getState().setDocument(metadata);
+        
+        const progress = useReadingProgressStore.getState().getProgress(metadata.id);
+        if (progress) {
+          usePDFStore.getState().setCurrentPage(progress.currentPage);
+        } else {
+          usePDFStore.getState().setCurrentPage(1);
+        }
+      } catch (err) {
         console.error('Failed to open file:', err);
-      });
+      }
     };
 
     window.addEventListener('dragenter', handleDragEnter);

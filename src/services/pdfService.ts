@@ -7,10 +7,13 @@ import type {
 } from '@/types/pdf';
 import { performanceMonitor } from './performanceMonitor';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).href;
+// Configure worker to use the built worker file from node_modules
+if (typeof window !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    '/node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
+    window.location.origin
+  ).href;
+}
 
 export class PDFService {
   private document: pdfjsLib.PDFDocumentProxy | null = null;

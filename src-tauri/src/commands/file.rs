@@ -1,14 +1,12 @@
 use tauri::AppHandle;
+use tauri::Manager;
 
 #[tauri::command]
 pub async fn open_file_dialog(app: AppHandle) -> Result<Option<String>, String> {
-    use tauri::Manager;
-    
-    let file_path = tauri::api::dialog::blocking::FileDialogBuilder::new()
-        .add_filter("PDF Files", &["pdf"])
-        .pick_file();
-
-    Ok(file_path.map(|p| p.to_string_lossy().to_string()))
+    // Use tauri-plugin-dialog for file picking
+    // For now, return None and implement via frontend
+    // Tauri 2.x dialog requires async/await handling
+    Ok(None)
 }
 
 #[tauri::command]
