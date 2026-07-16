@@ -1,6 +1,4 @@
 import { useState, useCallback } from 'react';
-import { open } from '@tauri-apps/plugin-dialog';
-import { readFile } from '@tauri-apps/plugin-fs';
 import { pdfService } from '@/services/pdfService';
 import { usePDFStore } from '@/stores/pdfStore';
 import { useReadingProgressStore } from '@/stores/readingProgressStore';
@@ -11,7 +9,7 @@ interface FileOpenOptions {
 }
 
 export function useFileOpen() {
-  const { setDocument, setCurrentPage } = usePDFStore();
+  const { setDocument, setCurrentPage, setPdfBlobUrl } = usePDFStore();
   const getProgress = useReadingProgressStore((state) => state.getProgress);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -20,43 +18,55 @@ export function useFileOpen() {
       try {
         setIsLoading(true);
 
-        const filePath = await open({
-          filters: [
-            {
-              name: 'PDF Documents',
-              extensions: ['pdf'],
-            },
-          ],
-        });
+        // Use browser file input instead of Tauri dialog
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.pdf,application/pdf';
+        
+        input.onchange = async (e: Event) => {
+          const target = e.target as HTMLInputElement;
+          const file = target.files?.[0];
+          
+          if (!file) {
+            setIsLoading(false);
+            return;
+          }
 
-        if (!filePath) {
-          setIsLoading(false);
-          return;
-        }
+          try {
+            // Create blob URL for native browser PDF viewer
+            const blobUrl = URL.createObjectURL(file);
+            setPdfBlobUrl(blobUrl);
 
-        const fileBytes = await readFile(filePath);
-        // Handle both number[] and Uint8Array return types
-        const uint8Array = Array.isArray(fileBytes) 
-          ? new Uint8Array(fileBytes)
-          : fileBytes instanceof Uint8Array
-          ? fileBytes
-          : new Uint8Array(fileBytes as ArrayBufferLike);
+            // Still load metadata using PDF.js (minimal usage)
+            const arrayBuffer = await file.arrayBuffer();
+            const uint8Array = new Uint8Array(arrayBuffer);
+            const metadata = await pdfService.loadDocument(uint8Array);
+            setDocument(metadata);
 
-        const metadata = await pdfService.loadDocument(uint8Array);
-        setDocument(metadata);
+            const progress = getProgress(metadata.id);
+            if (progress) {
+              setCurrentPage(progress.currentPage);
+            } else {
+              setCurrentPage(1);
+            }
 
-        const progress = getProgress(metadata.id);
-        if (progress) {
-          setCurrentPage(progress.currentPage);
-        } else {
-          setCurrentPage(1);
-        }
+            if (options?.onSuccess) {
+              options.onSuccess(file.name);
+            }
 
-        if (options?.onSuccess) {
-          options.onSuccess(filePath);
-        }
+            setIsLoading(false);
+          } catch (error) {
+            setIsLoading(false);
+            const err = error instanceof Error ? error : new Error('Unknown error');
+            console.error('Failed to open file:', err);
 
-        setIsLoading(false);
+            if (options?.onError) {
+              options.onError(err);
+            }
+          }
+        };
+
+        input.click();
       } catch (error) {
         setIsLoading(false);
         const err = error instanceof Error ? error : new Error('Unknown error');
@@ -71,33 +81,10 @@ export function useFileOpen() {
   );
 
   const openFileQuick = useCallback(
-    async (filePath: string) => {
-      try {
-        setIsLoading(true);
-
-        const fileBytes = await readFile(filePath);
-        // Handle both number[] and Uint8Array return types
-        const uint8Array = Array.isArray(fileBytes) 
-          ? new Uint8Array(fileBytes)
-          : fileBytes instanceof Uint8Array
-          ? fileBytes
-          : new Uint8Array(fileBytes as ArrayBufferLike);
-
-        const metadata = await pdfService.loadDocument(uint8Array);
-        setDocument(metadata);
-
-        const progress = getProgress(metadata.id);
-        if (progress) {
-          setCurrentPage(progress.currentPage);
-        } else {
-          setCurrentPage(1);
-        }
-
-        setIsLoading(false);
-      } catch (error) {
-        setIsLoading(false);
-        console.error('Failed to open file:', error);
-      }
+    async (_filePath: string) => {
+      // Quick open (native) is not available in this environment.
+      // This function is intentionally a no-op in browser builds.
+      return;
     },
     [setDocument, setCurrentPage, getProgress]
   );

@@ -1,4 +1,5 @@
-import * as pdfjsLib from 'pdfjs-dist';
+// Use the official PDF.js distribution (legacy ESM build) from pdfjs-dist
+// This aligns with the upstream Mozilla pdf.js sources while using the packaged build
 import type {
   PDFDocumentMetadata,
   PDFPageInfo,
@@ -7,22 +8,36 @@ import type {
 } from '@/types/pdf';
 import { performanceMonitor } from './performanceMonitor';
 
-// Configure worker to use the built worker file from node_modules
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    '/node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
-    window.location.origin
-  ).href;
-}
+// NOTE: pdf.js is dynamically imported to keep it out of the main bundle.
+// This reduces initial bundle size and places the worker and library into separate chunks.
 
 export class PDFService {
-  private document: pdfjsLib.PDFDocumentProxy | null = null;
-  private pageCache: Map<number, pdfjsLib.PDFPageProxy> = new Map();
+  private pdfjs: any = null;
+  private initialized: Promise<void> | null = null;
+
+  private document: any | null = null;
+  private pageCache: Map<number, any> = new Map();
   private pageLRU: number[] = [];
   private maxCacheSize = 20;
 
+  private async ensureInitialized(): Promise<void> {
+    if (this.initialized) return this.initialized;
+
+    this.initialized = (async () => {
+      const pdfjs = await import('pdfjs-dist/legacy/build/pdf');
+      // worker URL via vite's ?url import returns a module with default export as string
+      const workerMod = await import('pdfjs-dist/legacy/build/pdf.worker.min.js?url');
+      const workerUrl = (workerMod && (workerMod.default ?? workerMod)) as string;
+      pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+      this.pdfjs = pdfjs;
+    })();
+
+    return this.initialized;
+  }
+
   async loadDocument(data: Uint8Array): Promise<PDFDocumentMetadata> {
-    const loadingTask = pdfjsLib.getDocument({ data });
+    await this.ensureInitialized();
+    const loadingTask = this.pdfjs.getDocument({ data });
     this.document = await loadingTask.promise;
 
     const metadata = await this.document.getMetadata();
@@ -31,7 +46,7 @@ export class PDFService {
     return {
       id: crypto.randomUUID(),
       numPages: this.document.numPages,
-      fingerprint: this.document.fingerprints[0] ?? '',
+      fingerprint: this.document.fingerprints?.[0] ?? '',
       ...(info['Title'] !== undefined && { title: info['Title'] }),
       ...(info['Author'] !== undefined && { author: info['Author'] }),
       ...(info['Subject'] !== undefined && { subject: info['Subject'] }),
@@ -43,7 +58,7 @@ export class PDFService {
     };
   }
 
-  async getPage(pageNumber: number): Promise<pdfjsLib.PDFPageProxy> {
+  async getPage(pageNumber: number): Promise<any> {
     if (!this.document) {
       throw new Error('Document not loaded');
     }
@@ -55,7 +70,7 @@ export class PDFService {
     }
 
     const page = await this.document.getPage(pageNumber);
-    
+
     if (this.pageCache.size >= this.maxCacheSize) {
       const oldestPage = this.pageLRU.shift();
       if (typeof oldestPage === 'number') {
@@ -65,7 +80,7 @@ export class PDFService {
 
     this.pageCache.set(pageNumber, page);
     this.pageLRU.push(pageNumber);
-    
+
     return page;
   }
 
@@ -118,7 +133,7 @@ export class PDFService {
     
     try {
       const page = await this.getPage(pageNumber);
-      const viewport = page.getViewport({ 
+      const viewport = page.getViewport({
         scale: options.scale,
         rotation: options.rotation ?? 0,
       });
@@ -163,7 +178,7 @@ export class PDFService {
   async getTextContent(pageNumber: number): Promise<PDFTextContent> {
     const page = await this.getPage(pageNumber);
     const textContent = await page.getTextContent();
-    
+
     return textContent as unknown as PDFTextContent;
   }
 
@@ -207,7 +222,7 @@ export class PDFService {
     }
   }
 
-  getDocument(): pdfjsLib.PDFDocumentProxy | null {
+  getDocument(): any | null {
     return this.document;
   }
 }

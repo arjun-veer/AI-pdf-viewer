@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { usePDFStore } from '@/stores/pdfStore';
 import { useReadingProgressStore } from '@/stores/readingProgressStore';
-import { 
-  TTSControls, 
-  TTSHighlight, 
-  PronunciationChecker, 
+import {
+  TTSControls,
+  TTSHighlight,
+  PronunciationChecker,
   PracticeMode,
   TranslationPanel,
   OCRPanel,
@@ -13,6 +13,22 @@ import {
 } from '@/components/ai';
 import { pdfService } from '@/services/pdfService';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import {
+  FileText,
+  Bookmark,
+  Clock,
+  Mic,
+  BookOpen,
+  Languages,
+  Scan,
+  MessageSquare,
+  Settings,
+  ChevronDown,
+  ChevronRight,
+  ChevronLeft
+} from 'lucide-react';
 
 interface PDFSidebarProps {
   className?: string;
@@ -24,17 +40,32 @@ interface BookmarkItem {
   timestamp: string;
 }
 
+type SidebarTab = 'thumbnails' | 'bookmarks' | 'recent' | 'ai-features';
+
+const tabIcons: Record<SidebarTab, React.ComponentType<{ className?: string }>> = {
+  thumbnails: FileText,
+  bookmarks: Bookmark,
+  recent: Clock,
+  'ai-features': Mic,
+};
+
+const tabLabels: Record<SidebarTab, string> = {
+  thumbnails: 'Pages',
+  bookmarks: 'Bookmarks',
+  recent: 'Recent',
+  'ai-features': 'AI Tools',
+};
+
 export function PDFSidebar({ className }: PDFSidebarProps) {
   const { document, currentPage, setCurrentPage, totalPages } = usePDFStore();
   const recentDocuments = useReadingProgressStore((state) => state.recentDocuments);
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
-  const [activeTab, setActiveTab] = useState<
-    'info' | 'bookmarks' | 'recent' | 'tts' | 'practice' | 'translate' | 'ocr' | 'chat' | 'sync'
-  >('info');
+  const [activeTab, setActiveTab] = useState<SidebarTab>('thumbnails');
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    'ai-tools': false,
+  });
   const [pageText, setPageText] = useState<string>('');
-  const [isLoadingText, setIsLoadingText] = useState(false);
   const [documentHash, setDocumentHash] = useState<string>('');
-  const [selectedText] = useState<string>('');
 
   // Generate document hash for practice tracking
   useEffect(() => {
@@ -47,22 +78,14 @@ export function PDFSidebar({ className }: PDFSidebarProps) {
   // Extract text from current page for TTS, Practice, Translation, OCR, and Chat
   useEffect(() => {
     const loadPageText = async () => {
-      if (!document || 
-          (activeTab !== 'tts' && 
-           activeTab !== 'practice' && 
-           activeTab !== 'translate' && 
-           activeTab !== 'ocr' && 
-           activeTab !== 'chat')) return;
+      if (!document || activeTab !== 'ai-features') return;
 
-      setIsLoadingText(true);
       try {
         const text = await pdfService.getPageText(currentPage);
         setPageText(text);
       } catch (error) {
         console.error('Failed to extract page text:', error);
         setPageText('');
-      } finally {
-        setIsLoadingText(false);
       }
     };
 
@@ -81,106 +104,82 @@ export function PDFSidebar({ className }: PDFSidebarProps) {
     }
   };
 
-  const removeBookmark = (pageNumber: number) => {
-    setBookmarks(bookmarks.filter((b) => b.pageNumber !== pageNumber));
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
   };
-
-  const progress = useMemo(() => {
-    return totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : 0;
-  }, [currentPage, totalPages]);
+  const [collapsed, setCollapsed] = useState(false);
+  // progress currently unused but left for future UI
 
   return (
-    <div className={cn(
-      'flex h-full w-64 flex-col border-r bg-background overflow-hidden',
-      className
-    )}>
-      {/* Tabs */}
-      <div className="flex border-b overflow-x-auto">
-        {(['info', 'bookmarks', 'recent', 'tts', 'practice', 'translate', 'ocr', 'chat', 'sync'] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => {
-              setActiveTab(tab);
-            }}
-            className={cn(
-              'flex-1 px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap',
-              activeTab === tab
-                ? 'border-b-2 border-accent text-accent'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
+    <div className={cn('flex h-full flex-col p-2 frosted transition-all', collapsed ? 'w-20' : 'w-72', className)}>
+      <div className="flex items-center justify-between px-2 py-1">
+        <div className="flex items-center gap-2">
+          <div className="text-sm font-semibold">Document</div>
+          {!collapsed && <div className="text-xs text-muted-foreground">{document?.title || 'Untitled'}</div>}
+        </div>
+
+        <div className="no-drag">
+          <Button variant="ghost" size="sm" onClick={() => setCollapsed((c) => !c)} className="h-7 w-7 p-0" aria-pressed={collapsed} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto px-3 py-3">
-        {activeTab === 'info' && (
-          <div className="space-y-4">
-            {document && (
-              <>
-                <div>
-                  <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-1">
-                    Document
-                  </h3>
-                  <p className="text-sm break-words">
-                    {document.title || 'Untitled'}
-                  </p>
-                </div>
+      <div className="mt-2 rounded-md overflow-hidden bg-background/60 p-2">
+        {(Object.keys(tabIcons) as SidebarTab[]).map((tab) => {
+          const Icon = tabIcons[tab];
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                'w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors',
+                activeTab === tab ? 'bg-accent/10 text-foreground' : 'text-muted-foreground hover:bg-accent/5'
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {!collapsed && <span className="font-medium">{tabLabels[tab]}</span>}
+            </button>
+          );
+        })}
+      </div>
 
-                <div>
-                  <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-1">
-                    Progress
-                  </h3>
-                  <div className="space-y-2">
-                    <div className="w-full bg-accent/20 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-accent h-full transition-all duration-200"
-                        style={{ width: String(progress) + '%' }}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {currentPage} / {totalPages} ({progress}%)
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-1">
-                    Properties
-                  </h3>
-                  <dl className="text-xs space-y-1">
-                    {document.author && (
-                      <>
-                        <dt className="text-muted-foreground">Author:</dt>
-                        <dd className="ml-2 text-foreground">{document.author}</dd>
-                      </>
+      <div className="flex-1 overflow-auto mt-3 px-2">
+        {activeTab === 'thumbnails' && (
+          <div className="space-y-3">
+            <h4 className="text-xs font-medium text-muted-foreground">Pages</h4>
+            {totalPages > 0 ? (
+              <div className="grid grid-cols-2 gap-2">
+                {Array.from({ length: Math.min(totalPages, 20) }, (_, i) => i + 1).map((pageNum) => (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={cn(
+                      'aspect-[3/4] rounded border bg-muted/50 text-xs font-medium flex items-center justify-center',
+                      currentPage === pageNum ? 'border-accent bg-accent/10' : 'border-border hover:bg-accent/5'
                     )}
-                    {document.creator && (
-                      <>
-                        <dt className="text-muted-foreground">Creator:</dt>
-                        <dd className="ml-2 text-foreground">{document.creator}</dd>
-                      </>
-                    )}
-                    <dt className="text-muted-foreground">Pages:</dt>
-                    <dd className="ml-2 text-foreground">{totalPages}</dd>
-                  </dl>
-                </div>
-              </>
+                  >
+                    {pageNum}
+                  </button>
+                ))}
+                {totalPages > 20 && <div className="col-span-2 text-center text-xs text-muted-foreground py-2">+{totalPages - 20} more</div>}
+              </div>
+            ) : (
+              <div className="text-center text-sm text-muted-foreground py-8">No document loaded</div>
             )}
           </div>
         )}
 
         {activeTab === 'bookmarks' && (
           <div className="space-y-3">
-            <button
-              onClick={addBookmark}
-              className="w-full rounded bg-accent px-3 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
-            >
-              Add Bookmark
-            </button>
-            
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium text-muted-foreground">Bookmarks</h4>
+              <Button variant="outline" size="sm" onClick={addBookmark} className="h-7 px-2 text-xs">Add</Button>
+            </div>
+
             <div className="space-y-2">
               {bookmarks.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No bookmarks yet</p>
@@ -188,29 +187,11 @@ export function PDFSidebar({ className }: PDFSidebarProps) {
                 bookmarks.map((bookmark) => (
                   <div
                     key={bookmark.pageNumber}
-                    className={cn(
-                      'rounded border p-2 cursor-pointer transition-colors',
-                      currentPage === bookmark.pageNumber
-                        ? 'border-accent bg-accent/10'
-                        : 'border-border hover:bg-accent/5'
-                    )}
-                    onClick={() => {
-                      setCurrentPage(bookmark.pageNumber);
-                    }}
+                    className={cn('rounded border p-2 cursor-pointer', currentPage === bookmark.pageNumber ? 'border-accent bg-accent/10' : 'border-border hover:bg-accent/5')}
+                    onClick={() => setCurrentPage(bookmark.pageNumber)}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs font-medium">{bookmark.title}</div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeBookmark(bookmark.pageNumber);
-                        }}
-                        className="text-xs text-muted-foreground hover:text-destructive"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{bookmark.timestamp}</p>
+                    <div className="text-sm font-medium">{bookmark.title}</div>
+                    <div className="text-xs text-muted-foreground">{bookmark.timestamp}</div>
                   </div>
                 ))
               )}
@@ -223,129 +204,83 @@ export function PDFSidebar({ className }: PDFSidebarProps) {
             {recentDocuments.length === 0 ? (
               <p className="text-xs text-muted-foreground">No recent documents</p>
             ) : (
-              recentDocuments.map((doc) => (
-                <div
-                  key={doc.documentId}
-                  className="rounded border border-border p-2 text-xs hover:bg-accent/5 cursor-pointer transition-colors"
-                >
-                  <p className="font-medium">{'Page ' + String(doc.currentPage)}</p>
-                  <p className="text-muted-foreground text-xs">
-                    {new Date(doc.lastReadAt).toLocaleDateString()}
-                  </p>
+              recentDocuments.slice(0, 10).map((doc, index) => (
+                <div key={index} className="rounded border p-2 hover:bg-accent/5 transition-colors cursor-pointer text-xs">
+                  <div className="font-medium">Document {doc.documentId}</div>
+                  <div className="text-muted-foreground text-xs">{new Date(doc.lastReadAt).toLocaleDateString()}</div>
                 </div>
               ))
             )}
           </div>
         )}
 
-        {activeTab === 'tts' && (
-          <div className="flex flex-col gap-4">
-            {isLoadingText ? (
-              <div className="flex items-center justify-center p-4">
-                <p className="text-sm text-muted-foreground">Loading text...</p>
-              </div>
-            ) : (
-              <>
-                <div>
-                  <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">
-                    Page {currentPage} Text
-                  </h3>
-                  <TTSHighlight text={pageText} className="text-sm" />
-                </div>
-                
-                <div>
-                  <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">
-                    Controls
-                  </h3>
-                  <TTSControls text={pageText} />
-                </div>
+        {activeTab === 'ai-features' && (
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-muted-foreground">AI Tools</h4>
 
-                <div>
-                  <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">
-                    Pronunciation Practice
-                  </h3>
-                  <PronunciationChecker
-                    text={pageText}
-                    documentHash={documentHash}
-                    pageNumber={currentPage}
-                  />
-                </div>
-              </>
-            )}
-          </div>
-        )}
+            <div>
+              <button onClick={() => toggleSection('tts')} className="flex items-center gap-2 w-full text-left rounded px-2 py-1 hover:bg-accent/5">
+                {expandedSections['tts'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <Mic className="h-4 w-4" />
+                <span className="text-sm font-medium">Text-to-Speech</span>
+              </button>
+              {expandedSections['tts'] && <div className="ml-6 mt-2"><TTSControls /><TTSHighlight text={pageText} /></div>}
+            </div>
 
-        {activeTab === 'practice' && (
-          <div className="flex flex-col gap-4">
-            {isLoadingText ? (
-              <div className="flex items-center justify-center p-4">
-                <p className="text-sm text-muted-foreground">Loading practice data...</p>
-              </div>
-            ) : (
-              <PracticeMode
-                documentHash={documentHash}
-                pageText={pageText}
-                pageNumber={currentPage}
-              />
-            )}
-          </div>
-        )}
+            <Separator />
 
-        {activeTab === 'translate' && (
-          <div className="flex flex-col gap-4">
-            {isLoadingText ? (
-              <div className="flex items-center justify-center p-4">
-                <p className="text-sm text-muted-foreground">Loading text...</p>
-              </div>
-            ) : (
-              <TranslationPanel
-                documentHash={documentHash}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                pageText={pageText}
-                selectedText={selectedText}
-              />
-            )}
-          </div>
-        )}
+            <div>
+              <button onClick={() => toggleSection('pronunciation')} className="flex items-center gap-2 w-full text-left rounded px-2 py-1 hover:bg-accent/5">
+                {expandedSections['pronunciation'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <BookOpen className="h-4 w-4" />
+                <span className="text-sm font-medium">Pronunciation</span>
+              </button>
+              {expandedSections['pronunciation'] && <div className="ml-6 mt-2"><PronunciationChecker text={pageText} /><PracticeMode documentHash={documentHash} pageText={pageText} pageNumber={currentPage} /></div>}
+            </div>
 
-        {activeTab === 'ocr' && (
-          <div className="flex flex-col gap-4">
-            {isLoadingText ? (
-              <div className="flex items-center justify-center p-4">
-                <p className="text-sm text-muted-foreground">Loading OCR...</p>
-              </div>
-            ) : (
-              <OCRPanel
-                documentHash={documentHash}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                pageText={pageText}
-                hasImages={true}
-              />
-            )}
-          </div>
-        )}
+            <Separator />
 
-        {activeTab === 'chat' && (
-          <div className="flex flex-col gap-4 h-full">
-            {isLoadingText ? (
-              <div className="flex items-center justify-center p-4">
-                <p className="text-sm text-muted-foreground">Loading chat...</p>
-              </div>
-            ) : (
-              <ChatPanel
-                documentHash={documentHash}
-                pages={[{ pageNumber: currentPage, text: pageText }]}
-                onNavigateToPage={setCurrentPage}
-              />
-            )}
-          </div>
-        )}
+            <div>
+              <button onClick={() => toggleSection('translation')} className="flex items-center gap-2 w-full text-left rounded px-2 py-1 hover:bg-accent/5">
+                {expandedSections['translation'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <Languages className="h-4 w-4" />
+                <span className="text-sm font-medium">Translation</span>
+              </button>
+              {expandedSections['translation'] && <div className="ml-6 mt-2"><TranslationPanel documentHash={documentHash} currentPage={currentPage} totalPages={totalPages} pageText={pageText} /></div>}
+            </div>
 
-        {activeTab === 'sync' && (
-          <div className="flex flex-col gap-4">
-            <SyncSettings />
+            <Separator />
+
+            <div>
+              <button onClick={() => toggleSection('ocr')} className="flex items-center gap-2 w-full text-left rounded px-2 py-1 hover:bg-accent/5">
+                {expandedSections['ocr'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <Scan className="h-4 w-4" />
+                <span className="text-sm font-medium">OCR</span>
+              </button>
+              {expandedSections['ocr'] && <div className="ml-6 mt-2"><OCRPanel documentHash={documentHash} currentPage={currentPage} totalPages={totalPages} pageText={pageText} hasImages={false} /></div>}
+            </div>
+
+            <Separator />
+
+            <div>
+              <button onClick={() => toggleSection('chat')} className="flex items-center gap-2 w-full text-left rounded px-2 py-1 hover:bg-accent/5">
+                {expandedSections['chat'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <MessageSquare className="h-4 w-4" />
+                <span className="text-sm font-medium">AI Chat</span>
+              </button>
+              {expandedSections['chat'] && <div className="ml-6 mt-2"><ChatPanel documentHash={documentHash} pages={[{ pageNumber: currentPage, text: pageText }]} /></div>}
+            </div>
+
+            <Separator />
+
+            <div>
+              <button onClick={() => toggleSection('settings')} className="flex items-center gap-2 w-full text-left rounded px-2 py-1 hover:bg-accent/5">
+                {expandedSections['settings'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <Settings className="h-4 w-4" />
+                <span className="text-sm font-medium">Settings</span>
+              </button>
+              {expandedSections['settings'] && <div className="ml-6 mt-2"><SyncSettings /></div>}
+            </div>
           </div>
         )}
       </div>

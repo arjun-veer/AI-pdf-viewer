@@ -9,8 +9,10 @@ interface PDFState {
   scale: number;
   rotation: number;
   isLoading: boolean;
+  pdfBlobUrl: string | null;
 
   setDocument: (document: PDFDocumentMetadata) => void;
+  setPdfBlobUrl: (url: string | null) => void;
   setCurrentPage: (page: number) => void;
   setScale: (scale: number) => void;
   setRotation: (rotation: number) => void;
@@ -25,6 +27,7 @@ const initialState = {
   scale: 1.5,
   rotation: 0,
   isLoading: false,
+  pdfBlobUrl: null,
 };
 
 export const usePDFStore = create<PDFState>()(
@@ -36,6 +39,16 @@ export const usePDFStore = create<PDFState>()(
         state.document = document;
         state.totalPages = document.numPages;
         state.currentPage = 1;
+      });
+    },
+
+    setPdfBlobUrl: (url) => {
+      set((state) => {
+        // Revoke old URL to prevent memory leaks
+        if (state.pdfBlobUrl) {
+          URL.revokeObjectURL(state.pdfBlobUrl);
+        }
+        state.pdfBlobUrl = url;
       });
     },
 

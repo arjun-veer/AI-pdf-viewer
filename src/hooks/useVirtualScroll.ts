@@ -23,7 +23,7 @@ export function useVirtualScroll(config: VirtualScrollConfig): VirtualScrollResu
   const overscan = config.overscan ?? 2;
   
   const [visibleRange, setVisibleRange] = useState<VisibleRange>({
-    start: 0,
+    start: 1,
     end: Math.min(overscan * 2, config.totalPages),
   });
   const [currentPage, setCurrentPage] = useState(1);
@@ -63,8 +63,8 @@ export function useVirtualScroll(config: VirtualScrollConfig): VirtualScrollResu
       }, 150);
 
       const start = Math.max(
-        0,
-        Math.floor(scrollTop / config.pageHeight) - overscan
+        1,
+        Math.floor(scrollTop / config.pageHeight) - overscan + 1
       );
       const end = Math.min(
         config.totalPages,
